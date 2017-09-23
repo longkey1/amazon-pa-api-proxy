@@ -1,0 +1,33 @@
+image: longkey1/gitlab-go
+
+stages:
+  - release
+
+before_script:
+  - cp -a ${CI_PROJECT_DIR} ${GOPATH}/src
+  - cd ${GOPATH}/src/${CI_PROJECT_NAME}
+  - dep ensure
+
+release:
+  stage: release
+  variables:
+    GOX_OS: "linux"
+    GOX_ARCH: "386 amd64"
+    GOX_DIST_DIR: "_dist-gox"
+    GLR_DIST_DIR: "_dist-glr"
+  script:
+    - cp -a ${CI_PROJECT_DIR} ${GOPATH}/src
+    - go build
+    - mkdir -p ${GOX_DIST_DIR}
+    - mkdir -p ${GLR_DIST_DIR}
+    - gox -os="${GOX_OS}" -arch="${GOX_ARCH}" -output="${GOX_DIST_DIR}/{{.Dir}}_{{.OS}}_{{.Arch}}" ./...
+    - |
+      pushd ${GOX_DIST_DIR}; \
+      for TARGET in $(find . -mindepth 1 -maxdepth 1 -type f); do \
+        ARCHIVE_NAME="$(basename ${TARGET})"; \
+        zip -r ${GOPATH}/src/${CI_PROJECT_NAME}/${GLR_DIST_DIR}/${ARCHIVE_NAME}.zip ./${ARCHIVE_NAME}; \
+      done; \
+      popd
+    - glr -t ${GL_PRIVATE_TOKEN} ${CI_PROJECT_PATH} v$(./amazon-product-json version | cut -d " " -f 3) ${GLR_DIST_DIR}
+  only:
+    - master
