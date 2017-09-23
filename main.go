@@ -44,7 +44,7 @@ func main() {
 
 func checkVersion() {
 	if len(os.Args) > 1 && os.Args[1] == "version" {
-		fmt.Println(version)
+		fmt.Printf("amazon-product-json version %s\n", version)
 		os.Exit(0)
 	}
 }
@@ -52,6 +52,8 @@ func checkVersion() {
 func loadConfig() {
 	var configPath string
 	flag.StringVar(&configPath, "c", "config.tml", "configuration file path")
+	flag.Parse()
+
 	if _, err := toml.DecodeFile(configPath, &conf); err != nil {
 		panic(err)
 	}
