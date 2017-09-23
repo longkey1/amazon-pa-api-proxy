@@ -14,12 +14,6 @@
   revision = "f4947b9b32ad7805c9eed48a004693387d021ca5"
 
 [[projects]]
-  name = "github.com/basgys/goxml2json"
-  packages = ["."]
-  revision = "2d1144263e315d2f369c40473415e8d839e67bd3"
-  version = "v1.0.0"
-
-[[projects]]
   name = "github.com/labstack/echo"
   packages = ["."]
   revision = "cec7629194fe4bf83b0c72d9a02d340c7a1468ac"
@@ -70,6 +64,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ba80096fb9166cbad91b2ba65206b1594ec196a37113c818e9f58a988bd96e06"
+  inputs-digest = "fe900a6b30c4c6afc20216d7c11c5ced129a436378fb617569d8ff128dfdb133"
   solver-name = "gps-cdcl"
   solver-version = 1

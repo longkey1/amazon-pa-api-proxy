@@ -30,9 +30,5 @@
   name = "github.com/DDRBoxman/go-amazon-product-api"
 
 [[constraint]]
-  name = "github.com/basgys/goxml2json"
-  version = "1.0.0"
-
-[[constraint]]
   name = "github.com/labstack/echo"
   version = "3.2.3"

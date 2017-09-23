@@ -1,15 +1,14 @@
 package main
 
 import (
+	"encoding/xml"
 	"flag"
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/BurntSushi/toml"
 	amazonproduct "github.com/DDRBoxman/go-amazon-product-api"
-	xj "github.com/basgys/goxml2json"
 	"github.com/labstack/echo"
 )
 
@@ -83,10 +82,11 @@ func getItem(ctx echo.Context) error {
 		return ctx.String(http.StatusBadRequest, fmt.Sprintf("Error: %s", err.Error()))
 	}
 
-	buf, err := xj.Convert(strings.NewReader(res))
+	itemRes := new(amazonproduct.ItemLookupResponse)
+	err = xml.Unmarshal([]byte(res), itemRes)
 	if err != nil {
 		return ctx.String(http.StatusInternalServerError, fmt.Sprintf("Error: %s", err.Error()))
 	}
 
-	return ctx.JSONBlob(http.StatusOK, buf.Bytes())
+	return ctx.JSON(http.StatusOK, itemRes)
 }
