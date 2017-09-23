@@ -1,0 +1,8 @@
+port = "1323"
+
+[amazon]
+access_key = "xxxxxxxxxx"
+secret_key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+host = "webservices.amazon.com"
+associate_tag = "xxxxxxxxxx"
+response_group = "Images,ItemAttributes"
