@@ -6,3 +6,4 @@ secret_key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 host = "webservices.amazon.com"
 associate_tag = "xxxxxxxxxx"
 response_group = "Images,ItemAttributes"
+max_retry_number = 3

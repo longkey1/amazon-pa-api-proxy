@@ -24,11 +24,12 @@ type Config struct {
 
 // AmazonAPIConfig  ...
 type AmazonAPIConfig struct {
-	AccessKey     string `toml:"access_key"`
-	SecretKey     string `toml:"secret_key"`
-	Host          string `toml:"host"`
-	AssociateTag  string `toml:"associate_tag"`
-	ResponseGroup string `toml:"response_group"`
+	AccessKey      string `toml:"access_key"`
+	SecretKey      string `toml:"secret_key"`
+	Host           string `toml:"host"`
+	AssociateTag   string `toml:"associate_tag"`
+	ResponseGroup  string `toml:"response_group"`
+	MaxRetryNumber int    `toml:"max_retry_number"`
 }
 
 var conf Config
@@ -76,10 +77,18 @@ func getItem(ctx echo.Context) error {
 		return ctx.String(http.StatusBadRequest, "Asin is invalid")
 	}
 
+	var res string
+	var err error
 	api := getAPIClient()
-	res, err := api.ItemLookupWithResponseGroup(asin, conf.AmazonAPI.ResponseGroup)
-	if err != nil {
-		return ctx.String(http.StatusBadRequest, fmt.Sprintf("Error: %s", err.Error()))
+	for i := 0; i < conf.AmazonAPI.MaxRetryNumber; i++ {
+		res, err = api.ItemLookupWithResponseGroup(asin, conf.AmazonAPI.ResponseGroup)
+		if err != nil {
+			fmt.Printf("Error: %s\n", err.Error())
+		}
+		break
+	}
+	if len(res) == 0 {
+		return ctx.String(http.StatusInternalServerError, fmt.Sprintf("Error: %s", err.Error()))
 	}
 
 	itemRes := new(amazonproduct.ItemLookupResponse)
