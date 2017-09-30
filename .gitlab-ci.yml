@@ -11,8 +11,8 @@ before_script:
 release:
   stage: release
   variables:
-    GOX_OS: "linux"
-    GOX_ARCH: "386 amd64"
+    GOX_OS: "darwin linux"
+    GOX_ARCH: "amd64"
     GOX_DIST_DIR: "_dist-gox"
     GLR_DIST_DIR: "_dist-glr"
   script:
