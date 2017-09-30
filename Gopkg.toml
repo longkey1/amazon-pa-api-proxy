@@ -27,7 +27,7 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/DDRBoxman/go-amazon-product-api"
+  name = "github.com/dominicphillips/amazing"
 
 [[constraint]]
   name = "github.com/labstack/echo"

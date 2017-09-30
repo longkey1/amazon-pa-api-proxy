@@ -1,21 +1,19 @@
 package main
 
 import (
-	"encoding/xml"
 	"flag"
 	"fmt"
-	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
-	"time"
 
 	"github.com/BurntSushi/toml"
-	amazonproduct "github.com/DDRBoxman/go-amazon-product-api"
+	"github.com/dominicphillips/amazing"
 	"github.com/labstack/echo"
 )
 
 const (
-	version = "0.0.3"
+	version = "0.1.0"
 )
 
 // Config ...
@@ -26,13 +24,11 @@ type Config struct {
 
 // AmazonAPIConfig  ...
 type AmazonAPIConfig struct {
-	AccessKey           string `toml:"access_key"`
-	SecretKey           string `toml:"secret_key"`
-	Host                string `toml:"host"`
-	AssociateTag        string `toml:"associate_tag"`
-	ResponseGroup       string `toml:"response_group"`
-	MaxRetryNumber      int    `toml:"max_retry_number"`
-	RetryDurationSecond int    `toml:"retry_duration_second"`
+	AssociateTag  string `toml:"associate_tag"`
+	AccessKey     string `toml:"access_key"`
+	SecretKey     string `toml:"secret_key"`
+	ServiceDomain string `toml:"service_domain"`
+	ResponseGroup string `toml:"response_group"`
 }
 
 var conf Config
@@ -62,53 +58,20 @@ func loadConfig() {
 	}
 }
 
-func getAPIClient() amazonproduct.AmazonProductAPI {
-	var api amazonproduct.AmazonProductAPI
-
-	api.AccessKey = conf.AmazonAPI.AccessKey
-	api.SecretKey = conf.AmazonAPI.SecretKey
-	api.Host = conf.AmazonAPI.Host
-	api.AssociateTag = conf.AmazonAPI.AssociateTag
-	api.Client = &http.Client{} // optional
-
-	return api
-}
-
 func getItem(ctx echo.Context) error {
 	asin := ctx.Param("asin")
-	if string(asin) == "" {
-		return ctx.String(http.StatusBadRequest, "Asin is invalid")
+	if len(asin) == 0 {
+		return ctx.String(http.StatusBadRequest, "Asin is empty")
 	}
 
-	var itemRes *amazonproduct.ItemLookupResponse
-	api := getAPIClient()
-	for i := 0; i < conf.AmazonAPI.MaxRetryNumber; i++ {
-		// wait
-		rand.Seed(time.Now().UnixNano())
-		s := rand.Intn(conf.AmazonAPI.RetryDurationSecond)
-		if s > 0 {
-			time.Sleep(time.Duration(s) * time.Second)
-		}
-
-		res, err := api.ItemLookupWithResponseGroup(asin, conf.AmazonAPI.ResponseGroup)
-		if err != nil {
-			return ctx.String(http.StatusInternalServerError, fmt.Sprintf("Error: %s", err.Error()))
-		}
-		itemRes = new(amazonproduct.ItemLookupResponse)
-		err = xml.Unmarshal([]byte(res), itemRes)
-		if err != nil {
-			return ctx.String(http.StatusInternalServerError, fmt.Sprintf("Error: %s", err.Error()))
-		}
-		if len(itemRes.Items.Item.ASIN) == 0 {
-			continue
-		}
-
-		break
+	client, err := amazing.NewAmazing(conf.AmazonAPI.ServiceDomain, conf.AmazonAPI.AssociateTag, conf.AmazonAPI.AccessKey, conf.AmazonAPI.SecretKey)
+	params := url.Values{
+		"ResponseGroup": []string{conf.AmazonAPI.ResponseGroup},
+	}
+	res, err := client.ItemLookupAsin(asin, params)
+	if err != nil {
+		return ctx.String(http.StatusInternalServerError, fmt.Sprintf("Error: %s", err.Error()))
 	}
 
-	if len(itemRes.Items.Item.ASIN) == 0 {
-		return ctx.String(http.StatusInternalServerError, "Error: Invalid response")
-	}
-
-	return ctx.JSON(http.StatusOK, itemRes)
+	return ctx.JSON(http.StatusOK, res)
 }

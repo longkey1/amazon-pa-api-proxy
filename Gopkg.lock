@@ -9,9 +9,9 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/DDRBoxman/go-amazon-product-api"
+  name = "github.com/dominicphillips/amazing"
   packages = ["."]
-  revision = "f4947b9b32ad7805c9eed48a004693387d021ca5"
+  revision = "cb987417d19c613c4c104e1f8bf47bf8d5bfe0c5"
 
 [[projects]]
   name = "github.com/labstack/echo"
@@ -22,8 +22,8 @@
 [[projects]]
   name = "github.com/labstack/gommon"
   packages = ["color","log"]
-  revision = "779b8a8b9850a97acba6a3fe20feb628c39e17c1"
-  version = "0.2.2"
+  revision = "57409ada9da0f2afad6664c49502f8c50fbd8476"
+  version = "0.2.3"
 
 [[projects]]
   name = "github.com/mattn/go-colorable"
@@ -34,8 +34,8 @@
 [[projects]]
   name = "github.com/mattn/go-isatty"
   packages = ["."]
-  revision = "fc9e8d8ef48496124e79ae0df75490096eccf6fe"
-  version = "v0.0.2"
+  revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
+  version = "v0.0.3"
 
 [[projects]]
   branch = "master"
@@ -53,17 +53,17 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["acme","acme/autocert"]
-  revision = "7d9177d70076375b9a59c8fde23d52d9c4a7ecd5"
+  revision = "76eec36fa14229c4b25bb894c2d0e591527af429"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "429f518978ab01db8bb6f44b66785088e7fba58b"
+  revision = "314a259e304ff91bd6985da2a7149bbf91237993"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fe900a6b30c4c6afc20216d7c11c5ced129a436378fb617569d8ff128dfdb133"
+  inputs-digest = "1409dea1a059cf86f878c2839bae8955115e6a7fdc7ce8867345bc9599d57f28"
   solver-name = "gps-cdcl"
   solver-version = 1
