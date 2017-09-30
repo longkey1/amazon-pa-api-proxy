@@ -4,8 +4,10 @@ import (
 	"encoding/xml"
 	"flag"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	amazonproduct "github.com/DDRBoxman/go-amazon-product-api"
@@ -24,12 +26,13 @@ type Config struct {
 
 // AmazonAPIConfig  ...
 type AmazonAPIConfig struct {
-	AccessKey      string `toml:"access_key"`
-	SecretKey      string `toml:"secret_key"`
-	Host           string `toml:"host"`
-	AssociateTag   string `toml:"associate_tag"`
-	ResponseGroup  string `toml:"response_group"`
-	MaxRetryNumber int    `toml:"max_retry_number"`
+	AccessKey           string `toml:"access_key"`
+	SecretKey           string `toml:"secret_key"`
+	Host                string `toml:"host"`
+	AssociateTag        string `toml:"associate_tag"`
+	ResponseGroup       string `toml:"response_group"`
+	MaxRetryNumber      int    `toml:"max_retry_number"`
+	RetryDurationSecond int    `toml:"retry_duration_second"`
 }
 
 var conf Config
@@ -77,24 +80,34 @@ func getItem(ctx echo.Context) error {
 		return ctx.String(http.StatusBadRequest, "Asin is invalid")
 	}
 
-	var res string
-	var err error
+	var itemRes *amazonproduct.ItemLookupResponse
 	api := getAPIClient()
 	for i := 0; i < conf.AmazonAPI.MaxRetryNumber; i++ {
-		res, err = api.ItemLookupWithResponseGroup(asin, conf.AmazonAPI.ResponseGroup)
-		if err != nil {
-			fmt.Printf("Error: %s\n", err.Error())
+		// wait
+		rand.Seed(time.Now().UnixNano())
+		s := rand.Intn(conf.AmazonAPI.RetryDurationSecond)
+		if s > 0 {
+			time.Sleep(time.Duration(s) * time.Second)
 		}
+
+		res, err := api.ItemLookupWithResponseGroup(asin, conf.AmazonAPI.ResponseGroup)
+		if err != nil {
+			return ctx.String(http.StatusInternalServerError, fmt.Sprintf("Error: %s", err.Error()))
+		}
+		itemRes = new(amazonproduct.ItemLookupResponse)
+		err = xml.Unmarshal([]byte(res), itemRes)
+		if err != nil {
+			return ctx.String(http.StatusInternalServerError, fmt.Sprintf("Error: %s", err.Error()))
+		}
+		if len(itemRes.Items.Item.ASIN) == 0 {
+			continue
+		}
+
 		break
 	}
-	if len(res) == 0 {
-		return ctx.String(http.StatusInternalServerError, fmt.Sprintf("Error: %s", err.Error()))
-	}
 
-	itemRes := new(amazonproduct.ItemLookupResponse)
-	err = xml.Unmarshal([]byte(res), itemRes)
-	if err != nil {
-		return ctx.String(http.StatusInternalServerError, fmt.Sprintf("Error: %s", err.Error()))
+	if len(itemRes.Items.Item.ASIN) == 0 {
+		return ctx.String(http.StatusInternalServerError, "Error: Invalid response")
 	}
 
 	return ctx.JSON(http.StatusOK, itemRes)
