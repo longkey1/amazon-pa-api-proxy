@@ -1,4 +1,4 @@
-image: longkey1/gitlab-go
+image: registry.gitlab.com/longkey1/docker-gitlab-go:latest
 
 stages:
   - release
