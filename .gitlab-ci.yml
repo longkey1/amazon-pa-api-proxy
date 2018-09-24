@@ -1,33 +1,70 @@
-image: registry.gitlab.com/longkey1/docker-gitlab-go:latest
+image: registry.gitlab.com/longkey1/docker-go:latest
 
 stages:
+  - build
   - release
 
-before_script:
-  - cp -a ${CI_PROJECT_DIR} ${GOPATH}/src
-  - cd ${GOPATH}/src/${CI_PROJECT_NAME}
-  - dep ensure
+variables:
+  COMMAND: "amazon-product-json"
+  BIN_DIR: "${CI_PROJECT_DIR}/_bin"
+  DIST_DIR: "${CI_PROJECT_DIR}/_dist"
+  GHR_USER: "longkey1"
+  GHR_REPO: "amazon-product-json-bin"
 
-release:
-  stage: release
+build:
+  stage: build
   variables:
     GOX_OS: "darwin linux"
     GOX_ARCH: "amd64"
-    GOX_DIST_DIR: "_dist-gox"
-    GLR_DIST_DIR: "_dist-glr"
   script:
+    - mkdir -p ${BIN_DIR}
+    - mkdir -p ${DIST_DIR}
+    - mkdir -p tmp
     - cp -a ${CI_PROJECT_DIR} ${GOPATH}/src
-    - go build
-    - mkdir -p ${GOX_DIST_DIR}
-    - mkdir -p ${GLR_DIST_DIR}
-    - gox -os="${GOX_OS}" -arch="${GOX_ARCH}" -output="${GOX_DIST_DIR}/{{.Dir}}_{{.OS}}_{{.Arch}}" ./...
+    - cd ${GOPATH}/src/${CI_PROJECT_NAME}
+    - dep ensure
+    - go build -o ${BIN_DIR}/${COMMAND}
+    - gox -os="${GOX_OS}" -arch="${GOX_ARCH}" -output="tmp/{{.Dir}}_{{.OS}}_{{.Arch}}" ./...
     - |
-      pushd ${GOX_DIST_DIR}; \
+      pushd tmp; \
       for TARGET in $(find . -mindepth 1 -maxdepth 1 -type f); do \
         ARCHIVE_NAME="$(basename ${TARGET})"; \
-        zip -r ${GOPATH}/src/${CI_PROJECT_NAME}/${GLR_DIST_DIR}/${ARCHIVE_NAME}.zip ./${ARCHIVE_NAME}; \
+        zip -r ${DIST_DIR}/${ARCHIVE_NAME}.zip ./${ARCHIVE_NAME}; \
       done; \
       popd
-    - glr -t ${GL_PRIVATE_TOKEN} ${CI_PROJECT_PATH} v$(./amazon-product-json version | cut -d " " -f 3) ${GLR_DIST_DIR}
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - _bin/
+      - _dist/
+    policy: push
+
+release_github:
+  stage: release
+  script:
+    - ls -al ${BIN_DIR}
+    - ls -al ${DIST_DIR}
+    - ghr -t ${GITHUB_TOKEN} -u ${GHR_USER} -r ${GHR_REPO} v$(${BIN_DIR}/${COMMAND} version | cut -d " " -f 3) ${DIST_DIR}
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - _bin/
+      - _dist/
+    policy: pull
+  only:
+    - master
+
+release_gitlab:
+  stage: release
+  script:
+    - ls -al ${BIN_DIR}
+    - ls -al ${DIST_DIR}
+    - glr -t ${GITLAB_TOKEN} ${CI_PROJECT_PATH} v$(${BIN_DIR}/${COMMAND} version | cut -d " " -f 3) ${DIST_DIR}
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - _bin/
+      - _dist/
+    policy: pull
   only:
     - master
