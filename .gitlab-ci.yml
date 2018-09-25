@@ -24,14 +24,7 @@ build:
     - cd ${GOPATH}/src/${CI_PROJECT_NAME}
     - dep ensure
     - go build -o ${BIN_DIR}/${COMMAND}
-    - gox -os="${GOX_OS}" -arch="${GOX_ARCH}" -output="tmp/{{.Dir}}_{{.OS}}_{{.Arch}}" ./...
-    - |
-      pushd tmp; \
-      for TARGET in $(find . -mindepth 1 -maxdepth 1 -type f); do \
-        ARCHIVE_NAME="$(basename ${TARGET})"; \
-        zip -r ${DIST_DIR}/${ARCHIVE_NAME}.zip ./${ARCHIVE_NAME}; \
-      done; \
-      popd
+    - gox -os="${GOX_OS}" -arch="${GOX_ARCH}" -output="${DIST_DIR}/{{.Dir}}_{{.OS}}_{{.Arch}}" ./...
   cache:
     key: ${CI_COMMIT_REF_SLUG}
     paths:
@@ -42,9 +35,7 @@ build:
 release_github:
   stage: release
   script:
-    - ls -al ${BIN_DIR}
-    - ls -al ${DIST_DIR}
-    - ghr -t ${GITHUB_TOKEN} -u ${GHR_USER} -r ${GHR_REPO} v$(${BIN_DIR}/${COMMAND} --version | cut -d " " -f 3) ${DIST_DIR}
+    - ghr -t ${GITHUB_TOKEN} -u ${GHR_USER} -r ${GHR_REPO} -soft v$(${BIN_DIR}/${COMMAND} --version | cut -d " " -f 3) ${DIST_DIR}
   cache:
     key: ${CI_COMMIT_REF_SLUG}
     paths:
@@ -57,8 +48,6 @@ release_github:
 release_gitlab:
   stage: release
   script:
-    - ls -al ${BIN_DIR}
-    - ls -al ${DIST_DIR}
     - glr -t ${GITLAB_TOKEN} ${CI_PROJECT_PATH} v$(${BIN_DIR}/${COMMAND} --version | cut -d " " -f 3) ${DIST_DIR}
   cache:
     key: ${CI_COMMIT_REF_SLUG}
