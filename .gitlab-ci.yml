@@ -44,7 +44,7 @@ release_github:
   script:
     - ls -al ${BIN_DIR}
     - ls -al ${DIST_DIR}
-    - ghr -t ${GITHUB_TOKEN} -u ${GHR_USER} -r ${GHR_REPO} v$(${BIN_DIR}/${COMMAND} version | cut -d " " -f 3) ${DIST_DIR}
+    - ghr -t ${GITHUB_TOKEN} -u ${GHR_USER} -r ${GHR_REPO} v$(${BIN_DIR}/${COMMAND} --version | cut -d " " -f 3) ${DIST_DIR}
   cache:
     key: ${CI_COMMIT_REF_SLUG}
     paths:
@@ -59,7 +59,7 @@ release_gitlab:
   script:
     - ls -al ${BIN_DIR}
     - ls -al ${DIST_DIR}
-    - glr -t ${GITLAB_TOKEN} ${CI_PROJECT_PATH} v$(${BIN_DIR}/${COMMAND} version | cut -d " " -f 3) ${DIST_DIR}
+    - glr -t ${GITLAB_TOKEN} ${CI_PROJECT_PATH} v$(${BIN_DIR}/${COMMAND} --version | cut -d " " -f 3) ${DIST_DIR}
   cache:
     key: ${CI_COMMIT_REF_SLUG}
     paths:
