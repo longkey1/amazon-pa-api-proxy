@@ -1,1 +1,1 @@
-# amazon-product-json
+# amazon-product-json-bin
