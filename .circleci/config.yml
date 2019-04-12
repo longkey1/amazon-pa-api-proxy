@@ -1,0 +1,45 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.12
+    working_directory: /go/src/github.com/longkey1/amazon-product-json
+    steps:
+      - checkout
+      - restore_cache:
+          key: v1-pkg-cache-{{ checksum "/go/src/github.com/longkey1/amazon-product-json/Gopkg.lock" }}
+      - run: go get -u github.com/golang/dep/cmd/dep
+      - run: dep ensure
+      - save_cache:
+          key: v1-pkg-cache-{{ checksum "/go/src/github.com/longkey1/amazon-product-json/Gopkg.lock" }}
+          paths:
+            - vendor
+      - run: go get -u github.com/mitchellh/gox
+      - run: gox --osarch "darwin/amd64 linux/amd64 windows/amd64" --output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
+      - run: go build -o ./bin/amazon-product-json
+      - persist_to_workspace:
+          root: .
+          paths:
+            - bin
+            - dist
+  release:
+    docker:
+      - image: circleci/golang:1.12
+    working_directory: /go/src/github.com/longkey1/amazon-product-json
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: go get -u github.com/tcnksm/ghr
+      - run: ghr -t $GITHUB_TOKEN -u $CIRCLE_USERNAME -r $CIRCLE_PROJECT_REPONAME v$(./bin/amazon-product-json --version | cut -d " " -f 3) dist/
+workflows:
+  version: 2
+  build_and_release:
+    jobs:
+      - build
+      - release:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
