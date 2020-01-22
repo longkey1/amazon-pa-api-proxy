@@ -59,6 +59,10 @@ func loadConfig() {
 }
 
 func getItem(ctx echo.Context) error {
+	retry := 0
+	if ctx.Get("retry") != nil {
+		retry = ctx.Get("retry").(int)
+	}
 	asin := ctx.Param("asin")
 	if len(asin) == 0 {
 		return ctx.String(http.StatusBadRequest, "Asin is empty")
@@ -70,8 +74,11 @@ func getItem(ctx echo.Context) error {
 	}
 	res, err := client.ItemLookupAsin(asin, params)
 	if err != nil {
+		if retry < 2 {
+			ctx.Set("retry", retry + 1)
+			return getItem(ctx)
+		}
 		return ctx.String(http.StatusInternalServerError, fmt.Sprintf("Error: %s", err.Error()))
 	}
-
 	return ctx.JSON(http.StatusOK, res)
 }
