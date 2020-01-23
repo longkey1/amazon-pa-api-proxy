@@ -4,6 +4,10 @@ jobs:
     docker:
       - image: circleci/golang:1.13
     working_directory: /go/src/github.com/longkey1/amazon-product-json
+    environment:
+      GOPATH: "/go"
+      GO111MODULE: "on"
+
     steps:
       - checkout
       - run: go get -u github.com/mitchellh/gox
