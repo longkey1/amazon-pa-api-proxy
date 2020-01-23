@@ -2,18 +2,14 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.12
+      - image: circleci/golang:1.13
     working_directory: /go/src/github.com/longkey1/amazon-product-json
+    environment:
+      GOPATH: "/go"
+      GO111MODULE: "on"
+
     steps:
       - checkout
-      - restore_cache:
-          key: v1-pkg-cache-{{ checksum "/go/src/github.com/longkey1/amazon-product-json/Gopkg.lock" }}
-      - run: go get -u github.com/golang/dep/cmd/dep
-      - run: dep ensure
-      - save_cache:
-          key: v1-pkg-cache-{{ checksum "/go/src/github.com/longkey1/amazon-product-json/Gopkg.lock" }}
-          paths:
-            - vendor
       - run: go get -u github.com/mitchellh/gox
       - run: gox --osarch "darwin/amd64 linux/amd64 windows/amd64" --output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
       - run: go build -o ./bin/amazon-product-json
@@ -24,7 +20,7 @@ jobs:
             - dist
   release:
     docker:
-      - image: circleci/golang:1.12
+      - image: circleci/golang:1.13
     working_directory: /go/src/github.com/longkey1/amazon-product-json
     steps:
       - checkout
