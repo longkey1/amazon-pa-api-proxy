@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/dominicphillips/amazing"
@@ -13,7 +14,7 @@ import (
 )
 
 const (
-	version = "0.2.0"
+	version = "0.2.1"
 )
 
 // Config ...
@@ -76,6 +77,7 @@ func getItem(ctx echo.Context) error {
 	if err != nil {
 		if retry < 2 {
 			ctx.Set("retry", retry + 1)
+			time.Sleep(time.Second * 3)
 			return getItem(ctx)
 		}
 		return ctx.String(http.StatusInternalServerError, fmt.Sprintf("Error: %s", err.Error()))
