@@ -75,7 +75,7 @@ func getItem(ctx echo.Context) error {
 	}
 	res, err := client.ItemLookupAsin(asin, params)
 	if err != nil {
-		if retry < 2 {
+		if retry < 5 {
 			ctx.Set("retry", retry + 1)
 			time.Sleep(time.Second * 3)
 			return getItem(ctx)
