@@ -7,7 +7,7 @@ jobs:
     environment:
       GOPATH: "/go"
       GO111MODULE: "on"
-
+    resource_class: small
     steps:
       - checkout
       - run: go get -u github.com/mitchellh/gox
@@ -18,16 +18,19 @@ jobs:
           paths:
             - bin
             - dist
+
   release:
     docker:
       - image: circleci/golang:1.13
     working_directory: /go/src/github.com/longkey1/amazon-product-json
+    resource_class: small
     steps:
       - checkout
       - attach_workspace:
           at: .
       - run: go get -u github.com/tcnksm/ghr
       - run: ghr -t $GITHUB_TOKEN -u $CIRCLE_USERNAME -r $CIRCLE_PROJECT_REPONAME v$(./bin/amazon-product-json --version | cut -d " " -f 3) dist/
+
 workflows:
   version: 2
   build_and_release:
