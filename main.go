@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	version = "0.3.1"
+	version = "0.3.2"
 )
 
 // Config ...
@@ -84,8 +84,8 @@ func getItem(ctx echo.Context) error {
 	res, err := client.Request(q); if err != nil {
 		if retry < conf.AmazonAPI.MaxRetryNumber {
 			ctx.Set("retry", retry + 1)
-			ctx.Logger().Printf("Retried asin=%s. %d times.", asin, retry)
 			time.Sleep(time.Second * time.Duration(conf.AmazonAPI.RetryDelaySecond))
+			ctx.Logger().Printf("Retried asin=%s. %d times.", asin, retry)
 
 			return getItem(ctx)
 		}
