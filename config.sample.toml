@@ -6,4 +6,4 @@ secret_key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 associate_tag = "xxxxxxxxxx"
 locale_number = 8
 max_retry_number = 5
-retry_delay_second = 1
+retry_delay_second = 3

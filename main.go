@@ -3,18 +3,17 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/BurntSushi/toml"
+	"github.com/labstack/echo"
+	"github.com/spiegel-im-spiegel/pa-api"
 	"github.com/spiegel-im-spiegel/pa-api/query"
 	"net/http"
 	"os"
 	"time"
-
-	"github.com/BurntSushi/toml"
-	"github.com/labstack/echo"
-	"github.com/spiegel-im-spiegel/pa-api"
 )
 
 const (
-	version = "0.3.2"
+	version = "0.3.3"
 )
 
 // Config ...
@@ -85,7 +84,7 @@ func getItem(ctx echo.Context) error {
 		if retry < conf.AmazonAPI.MaxRetryNumber {
 			ctx.Set("retry", retry + 1)
 			time.Sleep(time.Second * time.Duration(conf.AmazonAPI.RetryDelaySecond))
-			ctx.Logger().Printf("Retried asin=%s. %d times.", asin, retry)
+			ctx.Logger().Printf("Retried asin=%s. %d times. msg=%s", asin, retry, err)
 
 			return getItem(ctx)
 		}
