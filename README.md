@@ -1,10 +1,10 @@
 # amazon-product-json
 
-Web API Server that returns results of Amazon Product Product Advertising API's ItemLookUp Operation with JSON
+Web API Server that returns results of Amazon Product Product Advertising API's GetItems Operation with JSON
 
 # Install
 
-Download binary file in [tags page](https://gitlab.com/longkey1/amazon-product-json/tags)
+Download binary file in [release page](https://github.com/longkey1/amazon-product-json/releases)
 
 # Usage
 
