@@ -3,17 +3,18 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/BurntSushi/toml"
-	"github.com/labstack/echo"
-	"github.com/spiegel-im-spiegel/pa-api"
-	"github.com/spiegel-im-spiegel/pa-api/query"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/BurntSushi/toml"
+	"github.com/labstack/echo"
+	paapi5 "github.com/spiegel-im-spiegel/pa-api"
+	"github.com/spiegel-im-spiegel/pa-api/query"
 )
 
 const (
-	version = "0.3.3"
+	version = "0.4.0"
 )
 
 // Config ...
@@ -24,12 +25,30 @@ type Config struct {
 
 // AmazonAPIConfig  ...
 type AmazonAPIConfig struct {
-	AssociateTag     string             `toml:"associate_tag"`
-	AccessKey        string             `toml:"access_key"`
-	SecretKey        string             `toml:"secret_key"`
-	LocalNumber      paapi5.Marketplace `toml:"locale_number"`
-	MaxRetryNumber   int                `toml:"max_retry_number"`
-	RetryDelaySecond int                `toml:"retry_delay_second"`
+	AssociateTag     string `toml:"associate_tag"`
+	AccessKey        string `toml:"access_key"`
+	SecretKey        string `toml:"secret_key"`
+	Locale           string `toml:"locale"`
+	RetryNumber      int    `toml:"retry_number"`
+	RetryDelaySecond int    `toml:"retry_delay_second"`
+}
+
+// localeMap
+var localeMap = map[string]paapi5.Marketplace{
+	"Australia":          paapi5.LocaleAustralia,
+	"Brazil":             paapi5.LocaleBrazil,
+	"Canada":             paapi5.LocaleCanada,
+	"France":             paapi5.LocaleFrance,
+	"Germany":            paapi5.LocaleGermany,
+	"India":              paapi5.LocaleIndia,
+	"Italy":              paapi5.LocaleItaly,
+	"Japan":              paapi5.LocaleJapan,
+	"Mexico":             paapi5.LocaleMexico,
+	"Spain":              paapi5.LocaleSpain,
+	"Turkey":             paapi5.LocaleTurkey,
+	"UnitedArabEmirates": paapi5.LocaleUnitedArabEmirates,
+	"UnitedKingdom":      paapi5.LocaleUnitedKingdom,
+	"UnitedStates":       paapi5.LocaleUnitedStates,
 }
 
 var conf Config
@@ -70,7 +89,7 @@ func getItem(ctx echo.Context) error {
 	}
 
 	client := paapi5.New(
-		paapi5.WithMarketplace(conf.AmazonAPI.LocalNumber),
+		paapi5.WithMarketplace(localeMap[conf.AmazonAPI.Locale]),
 	).CreateClient(
 		conf.AmazonAPI.AssociateTag,
 		conf.AmazonAPI.AccessKey,
@@ -80,9 +99,10 @@ func getItem(ctx echo.Context) error {
 	q := query.NewGetItems(client.Marketplace(), client.PartnerTag(), client.PartnerType())
 	q.ASINs([]string{asin}).EnableBrowseNodeInfo().EnableImages().EnableItemInfo().EnableOffers().EnableParentASIN()
 
-	res, err := client.Request(q); if err != nil {
-		if retry < conf.AmazonAPI.MaxRetryNumber {
-			ctx.Set("retry", retry + 1)
+	res, err := client.Request(q)
+	if err != nil {
+		if retry < conf.AmazonAPI.RetryNumber {
+			ctx.Set("retry", retry+1)
 			time.Sleep(time.Second * time.Duration(conf.AmazonAPI.RetryDelaySecond))
 			ctx.Logger().Printf("Retried asin=%s. %d times. msg=%s", asin, retry, err)
 
