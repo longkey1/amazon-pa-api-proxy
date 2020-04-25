@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	version = "0.5.0"
+	version = "0.5.1"
 )
 
 // Config ...
@@ -50,7 +50,6 @@ var conf Config
 
 func main() {
 	checkVersion()
-	var conf Config
 	err := envconfig.Process("apj", &conf)
 	if err != nil {
 		log.Fatal(err.Error())
