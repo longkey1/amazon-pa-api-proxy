@@ -84,6 +84,7 @@ func getItem(ctx echo.Context) error {
 		conf.AmazonSecretKey,
 	)
 
+	time.Sleep(time.Second * time.Duration(1))
 	q := query.NewGetItems(client.Marketplace(), client.PartnerTag(), client.PartnerType())
 	q.ASINs([]string{asin}).EnableBrowseNodeInfo().EnableImages().EnableItemInfo().EnableOffers().EnableParentASIN()
 
