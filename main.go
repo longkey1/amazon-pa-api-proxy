@@ -1,36 +1,31 @@
 package main
 
 import (
-	"flag"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"time"
 
-	"github.com/BurntSushi/toml"
 	"github.com/labstack/echo"
 	paapi5 "github.com/spiegel-im-spiegel/pa-api"
 	"github.com/spiegel-im-spiegel/pa-api/query"
+    "github.com/kelseyhightower/envconfig"
 )
 
 const (
-	version = "0.4.0"
+	version = "0.5.0"
 )
 
 // Config ...
 type Config struct {
-	Port      string          `toml:"port"`
-	AmazonAPI AmazonAPIConfig `toml:"amazon"`
-}
-
-// AmazonAPIConfig  ...
-type AmazonAPIConfig struct {
-	AssociateTag     string `toml:"associate_tag"`
-	AccessKey        string `toml:"access_key"`
-	SecretKey        string `toml:"secret_key"`
-	Locale           string `toml:"locale"`
-	RetryNumber      int    `toml:"retry_number"`
-	RetryDelaySecond int    `toml:"retry_delay_second"`
+	Port                   string `default:"1323"`
+	AmazonAssociateTag     string `required:"true" split_words:"true"`
+	AmazonAccessKey        string `required:"true" split_words:"true"`
+	AmazonSecretKey        string `required:"true" split_words:"true"`
+	AmazonLocale           string `required:"true" split_words:"true"`
+	AmazonRetryNumber      int    `default:"10" split_words:"true"`
+	AmazonRetryDelaySecond int    `default:"3" split_words:"true"`
 }
 
 // localeMap
@@ -55,7 +50,11 @@ var conf Config
 
 func main() {
 	checkVersion()
-	loadConfig()
+	var conf Config
+	err := envconfig.Process("apj", &conf)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 	e := echo.New()
 	e.GET("/items/:asin", getItem)
 	e.Logger.Fatal(e.Start(":" + conf.Port))
@@ -65,16 +64,6 @@ func checkVersion() {
 	if len(os.Args) > 1 && os.Args[1] == "--version" {
 		fmt.Printf("amazon-product-json version %s\n", version)
 		os.Exit(0)
-	}
-}
-
-func loadConfig() {
-	var configPath string
-	flag.StringVar(&configPath, "c", "config.toml", "configuration file path")
-	flag.Parse()
-
-	if _, err := toml.DecodeFile(configPath, &conf); err != nil {
-		panic(err)
 	}
 }
 
@@ -89,11 +78,11 @@ func getItem(ctx echo.Context) error {
 	}
 
 	client := paapi5.New(
-		paapi5.WithMarketplace(localeMap[conf.AmazonAPI.Locale]),
+		paapi5.WithMarketplace(localeMap[conf.AmazonLocale]),
 	).CreateClient(
-		conf.AmazonAPI.AssociateTag,
-		conf.AmazonAPI.AccessKey,
-		conf.AmazonAPI.SecretKey,
+		conf.AmazonAssociateTag,
+		conf.AmazonAccessKey,
+		conf.AmazonSecretKey,
 	)
 
 	q := query.NewGetItems(client.Marketplace(), client.PartnerTag(), client.PartnerType())
@@ -101,9 +90,9 @@ func getItem(ctx echo.Context) error {
 
 	res, err := client.Request(q)
 	if err != nil {
-		if retry < conf.AmazonAPI.RetryNumber {
+		if retry < conf.AmazonRetryNumber {
 			ctx.Set("retry", retry+1)
-			time.Sleep(time.Second * time.Duration(conf.AmazonAPI.RetryDelaySecond))
+			time.Sleep(time.Second * time.Duration(conf.AmazonRetryDelaySecond))
 			ctx.Logger().Printf("Retried asin=%s. %d times. msg=%s", asin, retry, err)
 
 			return getItem(ctx)
