@@ -5,12 +5,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
+	"github.com/kelseyhightower/envconfig"
 	"github.com/labstack/echo"
 	paapi5 "github.com/spiegel-im-spiegel/pa-api"
 	"github.com/spiegel-im-spiegel/pa-api/query"
-    "github.com/kelseyhightower/envconfig"
 )
 
 const (
@@ -24,7 +25,7 @@ type Config struct {
 	AmazonAccessKey        string `required:"true" split_words:"true"`
 	AmazonSecretKey        string `required:"true" split_words:"true"`
 	AmazonLocale           string `required:"true" split_words:"true"`
-	AmazonRetryNumber      int    `default:"10" split_words:"true"`
+	AmazonRetryNumber      int    `default:"3" split_words:"true"`
 	AmazonRetryDelaySecond int    `default:"3" split_words:"true"`
 }
 
@@ -46,14 +47,13 @@ var localeMap = map[string]paapi5.Marketplace{
 	"UnitedStates":       paapi5.LocaleUnitedStates,
 }
 
-var conf Config
+var conf = &Config{}
+var mutex = &sync.Mutex{}
 
 func main() {
 	checkVersion()
-	err := envconfig.Process("apj", &conf)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+	loadConfig()
+
 	e := echo.New()
 	e.GET("/items/:asin", getItem)
 	e.Logger.Fatal(e.Start(":" + conf.Port))
@@ -63,6 +63,13 @@ func checkVersion() {
 	if len(os.Args) > 1 && os.Args[1] == "--version" {
 		fmt.Printf("amazon-product-json version %s\n", version)
 		os.Exit(0)
+	}
+}
+
+func loadConfig() {
+	err := envconfig.Process("apj", &conf)
+	if err != nil {
+		log.Fatal(err.Error())
 	}
 }
 
@@ -84,22 +91,24 @@ func getItem(ctx echo.Context) error {
 		conf.AmazonSecretKey,
 	)
 
-	time.Sleep(time.Second * time.Duration(1))
 	q := query.NewGetItems(client.Marketplace(), client.PartnerTag(), client.PartnerType())
 	q.ASINs([]string{asin}).EnableBrowseNodeInfo().EnableImages().EnableItemInfo().EnableOffers().EnableParentASIN()
 
+	mutex.Lock()
 	res, err := client.Request(q)
-	if err != nil {
-		if retry < conf.AmazonRetryNumber {
-			ctx.Set("retry", retry+1)
-			time.Sleep(time.Second * time.Duration(conf.AmazonRetryDelaySecond))
-			ctx.Logger().Printf("Retried asin=%s. %d times. msg=%s", asin, retry, err)
+	if err == nil {
+		return ctx.JSONBlob(http.StatusOK, res)
+	}
+	time.Sleep(time.Second * time.Duration(1))
+	mutex.Unlock()
 
-			return getItem(ctx)
-		}
-
+	if retry >= conf.AmazonRetryNumber {
 		return ctx.String(http.StatusInternalServerError, fmt.Sprintf("Error: %s", err.Error()))
 	}
 
-	return ctx.JSONBlob(http.StatusOK, res)
+	ctx.Set("retry", retry+1)
+	time.Sleep(time.Second * time.Duration(conf.AmazonRetryDelaySecond))
+	ctx.Logger().Printf("Retried asin=%s. %d times. msg=%s", asin, retry, err)
+
+	return getItem(ctx)
 }
