@@ -2,16 +2,15 @@ package main
 
 import (
 	"fmt"
+	"github.com/kelseyhightower/envconfig"
+	"github.com/labstack/echo"
+	paapi5 "github.com/spiegel-im-spiegel/pa-api"
+	"github.com/spiegel-im-spiegel/pa-api/query"
 	"log"
 	"net/http"
 	"os"
 	"sync"
 	"time"
-
-	"github.com/kelseyhightower/envconfig"
-	"github.com/labstack/echo"
-	paapi5 "github.com/spiegel-im-spiegel/pa-api"
-	"github.com/spiegel-im-spiegel/pa-api/query"
 )
 
 const (
@@ -95,12 +94,13 @@ func getItem(ctx echo.Context) error {
 	q.ASINs([]string{asin}).EnableBrowseNodeInfo().EnableImages().EnableItemInfo().EnableOffers().EnableParentASIN()
 
 	mutex.Lock()
+	time.Sleep(time.Second * time.Duration(conf.AmazonRequestDelaySecond))
 	res, err := client.Request(q)
+	mutex.Unlock()
+
 	if err == nil {
 		return ctx.JSONBlob(http.StatusOK, res)
 	}
-	time.Sleep(time.Second * time.Duration(conf.AmazonRequestDelaySecond))
-	mutex.Unlock()
 
 	if retry >= conf.AmazonRetryNumber {
 		return ctx.String(http.StatusInternalServerError, fmt.Sprintf("Error: %s", err.Error()))
