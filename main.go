@@ -19,13 +19,13 @@ const (
 
 // Config ...
 type Config struct {
-	Port                     string `default:"1323"`
-	AmazonAssociateTag       string `required:"true" split_words:"true"`
-	AmazonAccessKey          string `required:"true" split_words:"true"`
-	AmazonSecretKey          string `required:"true" split_words:"true"`
-	AmazonLocale             string `required:"true" split_words:"true"`
-	AmazonRetryNumber        int    `default:"3" split_words:"true"`
-	AmazonRequestDelaySecond int    `default:"1" split_words:"true"`
+	Port                          string `default:"1323"`
+	AmazonAssociateTag            string `required:"true" split_words:"true"`
+	AmazonAccessKey               string `required:"true" split_words:"true"`
+	AmazonSecretKey               string `required:"true" split_words:"true"`
+	AmazonLocale                  string `required:"true" split_words:"true"`
+	AmazonRetryNumber             int    `default:"3" split_words:"true"`
+	AmazonRequestDelayMillisecond int    `default:"1000" split_words:"true"`
 }
 
 // localeMap
@@ -94,7 +94,7 @@ func getItem(ctx echo.Context) error {
 	q.ASINs([]string{asin}).EnableBrowseNodeInfo().EnableImages().EnableItemInfo().EnableOffers().EnableParentASIN()
 
 	mutex.Lock()
-	time.Sleep(time.Second * time.Duration(conf.AmazonRequestDelaySecond))
+	time.Sleep(time.Millisecond * time.Duration(conf.AmazonRequestDelayMillisecond))
 	res, err := client.Request(q)
 	mutex.Unlock()
 
