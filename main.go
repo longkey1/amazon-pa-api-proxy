@@ -20,13 +20,13 @@ const (
 
 // Config ...
 type Config struct {
-	Port                   string `default:"1323"`
-	AmazonAssociateTag     string `required:"true" split_words:"true"`
-	AmazonAccessKey        string `required:"true" split_words:"true"`
-	AmazonSecretKey        string `required:"true" split_words:"true"`
-	AmazonLocale           string `required:"true" split_words:"true"`
-	AmazonRetryNumber      int    `default:"3" split_words:"true"`
-	AmazonRetryDelaySecond int    `default:"3" split_words:"true"`
+	Port                     string `default:"1323"`
+	AmazonAssociateTag       string `required:"true" split_words:"true"`
+	AmazonAccessKey          string `required:"true" split_words:"true"`
+	AmazonSecretKey          string `required:"true" split_words:"true"`
+	AmazonLocale             string `required:"true" split_words:"true"`
+	AmazonRetryNumber        int    `default:"3" split_words:"true"`
+	AmazonRequestDelaySecond int    `default:"1" split_words:"true"`
 }
 
 // localeMap
@@ -99,7 +99,7 @@ func getItem(ctx echo.Context) error {
 	if err == nil {
 		return ctx.JSONBlob(http.StatusOK, res)
 	}
-	time.Sleep(time.Second * time.Duration(1))
+	time.Sleep(time.Second * time.Duration(conf.AmazonRequestDelaySecond))
 	mutex.Unlock()
 
 	if retry >= conf.AmazonRetryNumber {
@@ -107,7 +107,6 @@ func getItem(ctx echo.Context) error {
 	}
 
 	ctx.Set("retry", retry+1)
-	time.Sleep(time.Second * time.Duration(conf.AmazonRetryDelaySecond))
 	ctx.Logger().Printf("Retried asin=%s. %d times. msg=%s", asin, retry, err)
 
 	return getItem(ctx)
