@@ -67,7 +67,7 @@ func checkVersion() {
 }
 
 func loadConfig() {
-	err := envconfig.Process("apj", &conf)
+	err := envconfig.Process("apj", conf)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
