@@ -1,20 +1,22 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/kelseyhightower/envconfig"
-	"github.com/labstack/echo"
 	paapi5 "github.com/spiegel-im-spiegel/pa-api"
 	"github.com/spiegel-im-spiegel/pa-api/query"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
 
 const (
 	version = "0.6.4"
+	retryKey = "retry"
 )
 
 // Config ...
@@ -53,9 +55,8 @@ func main() {
 	checkVersion()
 	loadConfig()
 
-	e := echo.New()
-	e.GET("/items/:asin", getItem)
-	e.Logger.Fatal(e.Start(":" + conf.Port))
+	http.HandleFunc("/items/", getItems)
+	log.Fatal(http.ListenAndServe(":" + conf.Port, nil))
 }
 
 func checkVersion() {
@@ -72,14 +73,17 @@ func loadConfig() {
 	}
 }
 
-func getItem(ctx echo.Context) error {
+func getItems(w http.ResponseWriter, r *http.Request) {
 	retry := 0
-	if ctx.Get("retry") != nil {
-		retry = ctx.Get("retry").(int)
+	if r.Context().Value(retryKey) != nil {
+		retry = r.Context().Value(retryKey).(int)
 	}
-	asin := ctx.Param("asin")
+
+	asin := strings.TrimPrefix(r.URL.Path, "/items/")
 	if len(asin) == 0 {
-		return ctx.String(http.StatusBadRequest, "Asin is empty")
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte("Asin is empty"))
+		return
 	}
 
 	client := paapi5.New(
@@ -99,15 +103,19 @@ func getItem(ctx echo.Context) error {
 	mutex.Unlock()
 
 	if err == nil {
-		return ctx.JSONBlob(http.StatusOK, res)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(res)
+		return
 	}
 
 	if retry >= conf.AmazonRetryNumber {
-		return ctx.String(http.StatusInternalServerError, fmt.Sprintf("Error: %s", err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(fmt.Sprintf("Error: %s", err.Error())))
+		return
 	}
 
-	ctx.Set("retry", retry+1)
-	ctx.Logger().Printf("Retried asin=%s. %d times. msg=%s", asin, retry, err)
+	r.WithContext(context.WithValue(r.Context(), retryKey, retry + 1))
+	log.Printf("Retried asin=%s. %d times. msg=%s", asin, retry, err)
 
-	return getItem(ctx)
+	getItems(w, r)
 }
