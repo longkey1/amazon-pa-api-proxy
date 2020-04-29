@@ -1,9 +1,0 @@
-port = "1323"
-
-[amazon]
-access_key = "xxxxxxxxxx"
-secret_key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-associate_tag = "xxxxxxxxxx"
-locale = "Japan"
-retry_number = 5
-retry_delay_second = 3
