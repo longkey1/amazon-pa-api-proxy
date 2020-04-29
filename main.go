@@ -55,7 +55,7 @@ func main() {
 	checkVersion()
 	loadConfig()
 
-	log.Print("amazon-product-json started on http:localhost:" + conf.Port)
+	log.Print("amazon-product-json started on http://localhost:" + conf.Port)
 	http.HandleFunc("/items/", getItems)
 	log.Fatal(http.ListenAndServe(":" + conf.Port, nil))
 }
