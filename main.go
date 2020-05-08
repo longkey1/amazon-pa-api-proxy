@@ -15,13 +15,14 @@ import (
 )
 
 const (
+	name = "amazon-pa-api-proxy"
 	version = "0.8.0"
 	retryKey = "retry"
 )
 
 // Config ...
 type Config struct {
-	Port                          string `default:"1323"`
+	Port                          int    `default:"1323"`
 	AmazonAssociateTag            string `required:"true" split_words:"true"`
 	AmazonAccessKey               string `required:"true" split_words:"true"`
 	AmazonSecretKey               string `required:"true" split_words:"true"`
@@ -55,14 +56,14 @@ func main() {
 	checkVersion()
 	loadConfig()
 
-	log.Print("amazon-product-json started on http://localhost:" + conf.Port)
+	log.Printf("%s started on http://localhost:%d", name, conf.Port)
 	http.HandleFunc("/items/", getItems)
-	log.Fatal(http.ListenAndServe(":" + conf.Port, nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", conf.Port), nil))
 }
 
 func checkVersion() {
 	if len(os.Args) > 1 && os.Args[1] == "--version" {
-		fmt.Printf("amazon-pa-api-proxy version %s\n", version)
+		fmt.Printf("%s version %s\n", name, version)
 		os.Exit(0)
 	}
 }
