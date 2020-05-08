@@ -1,15 +1,15 @@
-# amazon-product-json
+# amazon-pa-api-proxy
 
-Web API Server that returns results of Amazon Product Product Advertising API's GetItems Operation with JSON
+Amazon Product Advertising API(PA-API) Proxy Server.
 
 ## Install
 
-Download binary file in [release page](https://github.com/longkey1/amazon-product-json/releases)
+Download binary file in [release page](https://github.com/longkey1/amazon-pa-api-proxy/releases)
 
 ## Usage
 
 ```
-./amazon-product-json
+./amazon-pa-api-proxy
 ```
 
 ```
@@ -20,13 +20,13 @@ http get http://localhost:1313/items/{asin}
 
 ### Environment variables
 
-- `APJ_PORT` (Default: 1323)
-- `APJ_AMAZON_ASSOCIATE_TAG`
-- `APJ_AMAZON_ACCESS_KEY`
-- `APJ_AMAZON_SECRET_KEY`
-- `APJ_AMAZON_LOCALE`
-- `APJ_AMAZON_RETRY_NUMBER` (Default: 3)
-- `APJ_AMAZON_REQUEST_DELAY_MILLISECOND` (Default: 1000)
+- `APAP_PORT` (Default: 1323)
+- `APAP_AMAZON_ASSOCIATE_TAG`
+- `APAP_AMAZON_ACCESS_KEY`
+- `APAP_AMAZON_SECRET_KEY`
+- `APAP_AMAZON_LOCALE`
+- `APAP_AMAZON_RETRY_NUMBER` (Default: 3)
+- `APAP_AMAZON_REQUEST_DELAY_MILLISECOND` (Default: 1000)
 
 ### Locale Map
 
