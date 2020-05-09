@@ -9,7 +9,7 @@ Download binary file in [release page](https://github.com/longkey1/amazon-pa-api
 ## Usage
 
 ```
-./amazon-pa-api-proxy
+$ ./amazon-pa-api-proxy
 ```
 
 ```
