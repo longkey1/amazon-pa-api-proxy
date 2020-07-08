@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/kelseyhightower/envconfig"
 	paapi5 "github.com/spiegel-im-spiegel/pa-api"
@@ -29,6 +30,15 @@ type Config struct {
 	AmazonLocale                  string `required:"true" split_words:"true"`
 	AmazonRetryNumber             int    `default:"3" split_words:"true"`
 	AmazonRequestDelayMillisecond int    `default:"1000" split_words:"true"`
+}
+
+// Response ...
+type ErrorResponse struct {
+	Errors []Error
+}
+type Error struct {
+	Code string
+	Message string
 }
 
 // localeMap
@@ -105,6 +115,18 @@ func getItems(w http.ResponseWriter, r *http.Request) {
 	mutex.Unlock()
 
 	if err == nil {
+		var er ErrorResponse
+		err = json.Unmarshal(res, &er)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte(fmt.Sprintf("Error: %s", err.Error())))
+			return
+		}
+		if len(er.Errors) > 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte(fmt.Sprintf("Error: %s > %s", er.Errors[0].Code, er.Errors[0].Message)))
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write(res)
 		return
