@@ -138,7 +138,8 @@ func getItems(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.WithContext(context.WithValue(r.Context(), retryKey, retry + 1))
+	retry = retry + 1
+	r = r.WithContext(context.WithValue(r.Context(), retryKey, retry))
 	log.Printf("Retried asin=%s. %d times. msg=%s", asin, retry, err)
 
 	getItems(w, r)
