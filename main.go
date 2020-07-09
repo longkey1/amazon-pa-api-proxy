@@ -17,7 +17,7 @@ import (
 
 const (
 	name = "amazon-pa-api-proxy"
-	version = "0.8.2"
+	version = "0.8.3"
 	retryKey = "retry"
 )
 
