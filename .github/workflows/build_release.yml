@@ -1,0 +1,81 @@
+name: build_release
+
+on:
+  push:
+    branches:
+      - 'master'
+    tags-ignore:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set timezone
+        run: |
+          echo "TZ=Asia/Tokyo" >> ${GITHUB_ENV}
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.16.6'
+
+      - name: Build amazon-pa-api-proxy
+        run: go build -o ./bin/amazon-pa-api-proxy
+
+      - name: Install gox
+        run: go install github.com/mitchellh/gox@latest
+
+      - name: Build cross platform
+        run: gox --osarch "darwin/amd64 linux/amd64 windows/amd64" --output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
+
+      - name: Upload self binary file
+        uses: actions/upload-artifact@v2
+        with:
+          name: bin
+          path: ./bin
+
+      - name: Upload build binaries for cross-platform
+        uses: actions/upload-artifact@v2
+        with:
+          name: dist
+          path: ./dist
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set timezone
+        run: |
+          echo "TZ=Asia/Tokyo" >> ${GITHUB_ENV}
+
+      - name: Set up golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.16.6'
+
+      - name: Install ghr
+        run: go install github.com/tcnksm/ghr@latest
+
+      - name: Download self binary file
+        uses: actions/download-artifact@v2
+        with:
+          name: bin
+          path: ./bin
+
+      - name: Download build binaries for cross-platform
+        uses: actions/download-artifact@v2
+        with:
+          name: dist
+          path: ./dist
+
+      - name: Release
+        run: |
+          ls ./bin
+          ls ./dist
+          chmod +x ./bin/amazon-pa-api-proxy
+          ghr -t ${{secrets.GH_PAT}} -u longkey1 -r amazon-pa-api-proxy v$(./bin/amazon-pa-api-proxy --version | cut -d " " -f 3) ./dist
+
